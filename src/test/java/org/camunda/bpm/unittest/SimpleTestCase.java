@@ -12,40 +12,57 @@
  */
 package org.camunda.bpm.unittest;
 
-import org.camunda.bpm.engine.runtime.ProcessInstance;
-import org.camunda.bpm.engine.test.Deployment;
+import org.apache.commons.io.IOUtils;
+import org.camunda.bpm.dmn.engine.DmnDecisionTableResult;
 import org.camunda.bpm.engine.test.ProcessEngineRule;
-
-import static org.camunda.bpm.engine.test.assertions.ProcessEngineTests.*;
-
+import org.camunda.bpm.engine.variable.VariableMap;
+import org.camunda.bpm.engine.variable.Variables;
+import org.camunda.bpm.model.dmn.Dmn;
+import org.camunda.bpm.model.dmn.DmnModelInstance;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+
+import static org.camunda.bpm.engine.test.assertions.ProcessEngineTests.processEngine;
+
 /**
- * @author Daniel Meyer
- * @author Martin Schimak
+ * @author avan2s
  */
 public class SimpleTestCase {
 
-  @Rule
-  public ProcessEngineRule rule = new ProcessEngineRule();
+    @Rule
+    public ProcessEngineRule rule = new ProcessEngineRule();
 
-  @Test
-  @Deployment(resources = {"testProcess.bpmn"})
-  public void shouldExecuteProcess() {
-    // Given we create a new process instance
-    ProcessInstance processInstance = runtimeService().startProcessInstanceByKey("testProcess");
-    // Then it should be active
-    assertThat(processInstance).isActive();
-    // And it should be the only instance
-    assertThat(processInstanceQuery().count()).isEqualTo(1);
-    // And there should exist just a single task within that process instance
-    assertThat(task(processInstance)).isNotNull();
+    @Test
+    public void shouldExecuteProcess() throws IOException {
+        VariableMap variables = Variables.createVariables().putValue("gender", "female");
+        String decisionDefinitionKey = "dmnColor";
+        String decisionDefinitionName = "colorDefinitionName";
 
-    // When we complete that task
-    complete(task(processInstance));
-    // Then the process instance should be ended
-    assertThat(processInstance).isEnded();
-  }
+        // Read the file
+        InputStream inputStream = new FileInputStream("dmnColor.dmn");
+        //this.getClass().getResourceAsStream("dmn/dmnColor.dmn");
+
+        // Getting the content of the file in plain-text org.apache.commons.io.IOUtils
+        String clearTextContent = IOUtils.toString(inputStream, Charset.defaultCharset().name());
+        inputStream.close();
+
+        inputStream = new ByteArrayInputStream(clearTextContent.getBytes());
+        DmnModelInstance dmnModelInstance = Dmn.readModelFromStream(inputStream);
+        // Validiate the model - works fine
+        Dmn.validateModel(dmnModelInstance);
+
+        // Add .dmn to the file, if it not exists
+        String resourceName = decisionDefinitionName.endsWith(".dmn") ? decisionDefinitionName : decisionDefinitionName + ".dmn";
+        // deploy the resource
+        processEngine().getRepositoryService().createDeployment().name(decisionDefinitionName).addString(resourceName, clearTextContent).deploy();
+
+        DmnDecisionTableResult colorDecisionResult = processEngine().getDecisionService().evaluateDecisionTableByKey(decisionDefinitionKey, variables);
+    }
 
 }

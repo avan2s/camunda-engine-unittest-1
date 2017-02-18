@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/DMN/20151101/dmn11.xsd" id="definitions" name="definitions" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="dmnColor" name="Dish">
+    <decisionTable id="decisionTable">
+      <input id="input1" label="Gender">
+        <inputExpression id="inputExpression1" typeRef="string">        <text>gender</text>
+</inputExpression>
+      </input>
+      <output id="output1" label="Color" name="color" typeRef="string" />
+      <rule id="row-950612891-1">
+        <inputEntry id="UnaryTests_0c1o054">        <text><![CDATA["female"]]></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_065u3ym">        <text><![CDATA["pink"]]></text>
+</outputEntry>
+      </rule>
+      <rule id="row-950612891-2">
+        <inputEntry id="UnaryTests_0u1z4ho">        <text><![CDATA["male"]]></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_198frve">        <text><![CDATA["blue"]]></text>
+</outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>
